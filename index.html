@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="相席ちゃんねる">
+
+  <!-- PWA manifest (Android/Chrome) -->
+  <link rel="manifest" href="manifest.json">
+
+  <!-- iOS Home Screen icon & splash -->
+  <link rel="apple-touch-icon" href="icon-192.png">
+
+  <!-- iOS status bar colour matches the app background -->
+  <meta name="theme-color" content="#0d0d0f">
+
+  <title>相席ちゃんねる</title>
+  <style>
+    :root {
+      --bg: #0d0d0f;
+      --card: #1a1a1f;
+      --border: #2a2a35;
+      --men: #4a9eff;
+      --women: #ff6b9d;
+      --text: #f0f0f5;
+      --sub: #888899;
+      --green: #3ddc84;
+      --red: #ff4d4d;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, 'Helvetica Neue', sans-serif;
+      min-height: 100dvh;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      text-align: center;
+      padding: 20px 16px 8px;
+    }
+    header h1 { font-size: 15px; font-weight: 600; color: var(--sub); letter-spacing: 0.08em; text-transform: uppercase; }
+
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      padding: 12px 16px 20px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .venue-name {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .status-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: var(--sub);
+      flex-shrink: 0;
+    }
+    .status-dot.open { background: var(--green); box-shadow: 0 0 6px var(--green); }
+    .status-dot.error { background: var(--red); }
+
+    .counts {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .count-box {
+      background: var(--bg);
+      border-radius: 12px;
+      padding: 14px 12px;
+      text-align: center;
+    }
+
+    .count-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .count-label.men { color: var(--men); }
+    .count-label.women { color: var(--women); }
+
+    .count-number {
+      font-size: 48px;
+      font-weight: 800;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+    .count-number.men { color: var(--men); }
+    .count-number.women { color: var(--women); }
+    .count-number.loading { color: var(--sub); font-size: 36px; }
+
+    .bar-wrap { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+    .bar-inner { height: 100%; border-radius: 3px; transition: width 0.5s ease; width: 0; }
+    .bar-inner.men { background: var(--men); }
+    .bar-inner.women { background: var(--women); }
+
+    .ratio-row {
+      display: flex;
+      gap: 6px;
+    }
+    .ratio-row .bar-wrap { flex: 1; }
+
+    .card-footer {
+      font-size: 11px;
+      color: var(--sub);
+      text-align: right;
+    }
+
+    .error-msg {
+      font-size: 13px;
+      color: var(--red);
+      text-align: center;
+      padding: 8px 0;
+    }
+
+    footer {
+      text-align: center;
+      padding: 0 16px 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .refresh-btn {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 50px;
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 600;
+      padding: 10px 28px;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: opacity 0.15s;
+    }
+    .refresh-btn:active { opacity: 0.6; }
+    .refresh-btn:disabled { opacity: 0.4; }
+
+    .last-updated {
+      font-size: 11px;
+      color: var(--sub);
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .spin { display: inline-block; animation: spin 1s linear infinite; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>相席ちゃんねる — 福岡</h1>
+</header>
+
+<main>
+  <!-- JIS -->
+  <div class="card" id="jis-card">
+    <div class="card-header">
+      <span class="venue-name">JIS FUKUOKA</span>
+      <span class="status-dot" id="jis-dot"></span>
+    </div>
+    <div class="counts">
+      <div class="count-box">
+        <div class="count-label men">MEN</div>
+        <div class="count-number men loading" id="jis-men">—</div>
+      </div>
+      <div class="count-box">
+        <div class="count-label women">WOMEN</div>
+        <div class="count-number women loading" id="jis-women">—</div>
+      </div>
+    </div>
+    <div class="ratio-row">
+      <div class="bar-wrap"><div class="bar-inner men" id="jis-bar-men"></div></div>
+      <div class="bar-wrap"><div class="bar-inner women" id="jis-bar-women"></div></div>
+    </div>
+    <div class="card-footer" id="jis-time"></div>
+    <div class="error-msg" id="jis-error" style="display:none"></div>
+  </div>
+
+  <!-- Oriental Lounge -->
+  <div class="card" id="ol-card">
+    <div class="card-header">
+      <span class="venue-name">Oriental Lounge</span>
+      <span class="status-dot" id="ol-dot"></span>
+    </div>
+    <div class="counts">
+      <div class="count-box">
+        <div class="count-label men">GENTLEMEN</div>
+        <div class="count-number men loading" id="ol-men">—</div>
+      </div>
+      <div class="count-box">
+        <div class="count-label women">LADIES</div>
+        <div class="count-number women loading" id="ol-women">—</div>
+      </div>
+    </div>
+    <div class="ratio-row">
+      <div class="bar-wrap"><div class="bar-inner men" id="ol-bar-men"></div></div>
+      <div class="bar-wrap"><div class="bar-inner women" id="ol-bar-women"></div></div>
+    </div>
+    <div class="card-footer" id="ol-time"></div>
+    <div class="error-msg" id="ol-error" style="display:none"></div>
+  </div>
+</main>
+
+<footer>
+  <button class="refresh-btn" id="refresh-btn" onclick="fetchAll()">更新</button>
+  <div class="last-updated" id="last-updated"></div>
+</footer>
+
+<script>
+  const JIS_WORKER_URL = 'https://jis.aisekichannel.workers.dev';
+  const OL_WORKER_URL  = 'https://ol.aisekichannel.workers.dev';
+  // ─────────────────────────────────────────────────────────────
+
+  const AUTO_REFRESH_MS = 1 * 60 * 1000; // refresh every minute
+
+  function setBar(barId, val, max) {
+    const pct = max > 0 ? Math.min(100, Math.round(val / max * 100)) : 0;
+    document.getElementById(barId).style.width = pct + '%';
+  }
+
+  function fmtTime() {
+    return new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  async function fetchJIS() {
+    const dot = document.getElementById('jis-dot');
+    const errEl = document.getElementById('jis-error');
+    errEl.style.display = 'none';
+    dot.className = 'status-dot';
+    try {
+      const r = await fetch(JIS_WORKER_URL, { cache: 'no-store' });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const d = await r.json();
+      const men = parseInt(d.men) || 0;
+      const women = parseInt(d.women) || 0;
+      document.getElementById('jis-men').textContent = men;
+      document.getElementById('jis-women').textContent = women;
+      document.getElementById('jis-men').classList.remove('loading');
+      document.getElementById('jis-women').classList.remove('loading');
+      const max = Math.max(men, women, 1);
+      setBar('jis-bar-men', men, max);
+      setBar('jis-bar-women', women, max);
+      dot.classList.add('open');
+      document.getElementById('jis-time').textContent = fmtTime() + ' 時点';
+    } catch (e) {
+      dot.classList.add('error');
+      errEl.textContent = '取得できませんでした';
+      errEl.style.display = 'block';
+    }
+  }
+
+  async function fetchOL() {
+    const dot = document.getElementById('ol-dot');
+    const errEl = document.getElementById('ol-error');
+    errEl.style.display = 'none';
+    dot.className = 'status-dot';
+    try {
+      const r = await fetch(OL_WORKER_URL, { cache: 'no-store' });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const d = await r.json();
+      const men = parseInt(d.men) || 0;
+      const women = parseInt(d.women) || 0;
+      document.getElementById('ol-men').textContent = men;
+      document.getElementById('ol-women').textContent = women;
+      document.getElementById('ol-men').classList.remove('loading');
+      document.getElementById('ol-women').classList.remove('loading');
+      const max = Math.max(men, women, 1);
+      setBar('ol-bar-men', men, max);
+      setBar('ol-bar-women', women, max);
+      dot.classList.add('open');
+      document.getElementById('ol-time').textContent = fmtTime() + ' 時点';
+    } catch (e) {
+      dot.classList.add('error');
+      errEl.textContent = '取得できませんでした';
+      errEl.style.display = 'block';
+    }
+  }
+
+  async function fetchAll() {
+    const btn = document.getElementById('refresh-btn');
+    btn.disabled = true;
+    btn.textContent = '⟳ 更新中...';
+    await Promise.all([fetchJIS(), fetchOL()]);
+    document.getElementById('last-updated').textContent = '最終更新: ' + fmtTime();
+    btn.disabled = false;
+    btn.textContent = '更新';
+  }
+
+  fetchAll();
+  setInterval(fetchAll, AUTO_REFRESH_MS);
+
+  // Register service worker for offline shell caching
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  }
+</script>
+</body>
+</html>
