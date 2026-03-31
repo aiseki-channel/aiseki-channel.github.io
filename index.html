@@ -22,184 +22,146 @@
       --sub: #888899;
       --green: #3ddc84;
       --red: #ff4d4d;
+      --closed: #3a3a45;
     }
-
     * { box-sizing: border-box; margin: 0; padding: 0; }
-
     body {
       background: var(--bg);
       color: var(--text);
       font-family: -apple-system, 'Helvetica Neue', sans-serif;
       min-height: 100dvh;
       padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-      display: flex;
-      flex-direction: column;
+      display: flex; flex-direction: column;
+      overscroll-behavior-y: contain;
     }
+    /* Pull to refresh */
+    #ptr {
+      display: flex; align-items: center; justify-content: center;
+      height: 0; overflow: hidden;
+      font-size: 13px; color: var(--sub);
+      transition: height 0.2s ease;
+    }
+    #ptr.visible { height: 44px; }
+    #ptr.spinning span { animation: spin 0.8s linear infinite; display: inline-block; }
 
     header { text-align: center; padding: 20px 16px 8px; }
     header h1 { font-size: 15px; font-weight: 600; color: var(--sub); letter-spacing: 0.08em; text-transform: uppercase; }
 
-    main {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      padding: 12px 16px 20px;
-    }
+    main { flex: 1; display: flex; flex-direction: column; gap: 16px; padding: 12px 16px 20px; }
 
     .card {
       background: var(--card);
       border: 1px solid var(--border);
-      border-radius: 18px;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
+      border-radius: 18px; padding: 20px;
+      display: flex; flex-direction: column; gap: 16px;
+      transition: opacity 0.3s;
+    }
+    .card.closed { opacity: 0.5; }
+
+    .card-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .card-header-left { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; }
+    .venue-name { font-size: 20px; font-weight: 700; letter-spacing: -0.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .card-header-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+    .closed-badge {
+      font-size: 11px; font-weight: 600; color: var(--sub);
+      background: var(--closed); border-radius: 6px;
+      padding: 3px 7px; white-space: nowrap;
     }
 
-    .card-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+    .maps-btn {
+      background: #1a3a5c;
+      border: 1px solid #2a5a8c;
+      border-radius: 8px;
+      color: #4a9eff;
+      font-size: 11px; font-weight: 600;
+      padding: 5px 9px;
+      cursor: pointer;
+      text-decoration: none;
+      white-space: nowrap;
+      -webkit-tap-highlight-color: transparent;
+      display: flex; align-items: center; gap: 4px;
     }
-
-    .venue-name { font-size: 20px; font-weight: 700; letter-spacing: -0.02em; }
+    .maps-btn:active { opacity: 0.7; }
 
     .status-dot {
-      width: 10px; height: 10px;
-      border-radius: 50%;
-      background: var(--sub);
-      flex-shrink: 0;
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--sub); flex-shrink: 0;
     }
     .status-dot.open  { background: var(--green); box-shadow: 0 0 6px var(--green); }
     .status-dot.error { background: var(--red); }
 
-    .counts {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-
-    .count-box {
-      background: var(--bg);
-      border-radius: 12px;
-      padding: 14px 12px;
-      text-align: center;
-    }
-
-    .count-label {
-      font-size: 11px; font-weight: 600;
-      letter-spacing: 0.1em; text-transform: uppercase;
-      margin-bottom: 6px;
-    }
+    .counts { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .count-box { background: var(--bg); border-radius: 12px; padding: 14px 12px; text-align: center; }
+    .count-label { font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 6px; }
     .count-label.men   { color: var(--men); }
     .count-label.women { color: var(--women); }
-
-    .count-number {
-      font-size: 48px; font-weight: 800;
-      line-height: 1; font-variant-numeric: tabular-nums;
-    }
+    .count-number { font-size: 48px; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
     .count-number.men    { color: var(--men); }
     .count-number.women  { color: var(--women); }
     .count-number.loading { color: var(--sub); font-size: 36px; }
+
+    .fire-badge { font-size: 22px; line-height: 1; }
 
     .bar-wrap  { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
     .bar-inner { height: 100%; border-radius: 3px; transition: width 0.5s ease; width: 0; }
     .bar-inner.men   { background: var(--men); }
     .bar-inner.women { background: var(--women); }
-
     .ratio-row { display: flex; gap: 6px; }
     .ratio-row .bar-wrap { flex: 1; }
 
-    .card-footer { font-size: 11px; color: var(--sub); text-align: right; }
+    .card-footer { font-size: 11px; color: var(--sub); display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+    .changed-ago { font-style: italic; }
 
     .error-msg { font-size: 13px; color: var(--red); text-align: center; padding: 8px 0; }
 
-    /* Sound Park — sub-store rows */
+    /* Sound Park sub-stores */
     .sp-stores { display: flex; flex-direction: column; gap: 10px; }
-
-    .sp-store {
-      background: var(--card2);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 12px 14px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .sp-store-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
+    .sp-store { background: var(--card2); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+    .sp-store-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
     .sp-store-name { font-size: 13px; font-weight: 600; color: var(--text); }
-
-    .sp-counts {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-    }
-
-    .sp-count-box {
-      background: var(--bg);
-      border-radius: 8px;
-      padding: 8px 10px;
-      text-align: center;
-    }
-
-    .sp-count-label {
-      font-size: 10px; font-weight: 600;
-      letter-spacing: 0.1em; text-transform: uppercase;
-      margin-bottom: 4px;
-    }
+    .sp-counts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .sp-count-box { background: var(--bg); border-radius: 8px; padding: 8px 10px; text-align: center; }
+    .sp-count-label { font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 4px; }
     .sp-count-label.men   { color: var(--men); }
     .sp-count-label.women { color: var(--women); }
-
-    .sp-count-number {
-      font-size: 32px; font-weight: 800;
-      line-height: 1; font-variant-numeric: tabular-nums;
-    }
+    .sp-count-number { font-size: 32px; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
     .sp-count-number.men    { color: var(--men); }
     .sp-count-number.women  { color: var(--women); }
     .sp-count-number.loading { color: var(--sub); font-size: 24px; }
 
-    footer {
-      text-align: center;
-      padding: 0 16px 16px;
-      display: flex; flex-direction: column; align-items: center; gap: 10px;
-    }
-
+    footer { text-align: center; padding: 0 16px 16px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
     .refresh-btn {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 50px;
-      color: var(--text);
-      font-size: 14px; font-weight: 600;
-      padding: 10px 28px;
-      cursor: pointer;
-      -webkit-tap-highlight-color: transparent;
-      transition: opacity 0.15s;
+      background: var(--card); border: 1px solid var(--border); border-radius: 50px;
+      color: var(--text); font-size: 14px; font-weight: 600; padding: 10px 28px;
+      cursor: pointer; -webkit-tap-highlight-color: transparent; transition: opacity 0.15s;
     }
     .refresh-btn:active  { opacity: 0.6; }
     .refresh-btn:disabled { opacity: 0.4; }
-
     .last-updated { font-size: 11px; color: var(--sub); }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
 
-<header>
-  <h1>相席ちゃんねる — 福岡</h1>
-</header>
+<div id="ptr"><span>↻</span> &nbsp;引っ張って更新</div>
+
+<header><h1>相席ちゃんねる — 福岡</h1></header>
 
 <main>
   <!-- JIS -->
   <div class="card" id="jis-card">
     <div class="card-header">
-      <span class="venue-name">JIS FUKUOKA</span>
-      <span class="status-dot" id="jis-dot"></span>
+      <div class="card-header-left">
+        <span class="venue-name">JIS FUKUOKA</span>
+        <span class="fire-badge" id="jis-fire" style="display:none">🔥</span>
+      </div>
+      <div class="card-header-right">
+        <span class="closed-badge" id="jis-closed" style="display:none">閉店中</span>
+        <a class="maps-btn" href="https://maps.google.com/maps?q=JIS+FUKUOKA+大名+福岡" target="_blank">📍 MAP</a>
+        <span class="status-dot" id="jis-dot"></span>
+      </div>
     </div>
     <div class="counts">
       <div class="count-box">
@@ -215,15 +177,25 @@
       <div class="bar-wrap"><div class="bar-inner men" id="jis-bar-men"></div></div>
       <div class="bar-wrap"><div class="bar-inner women" id="jis-bar-women"></div></div>
     </div>
-    <div class="card-footer" id="jis-time"></div>
+    <div class="card-footer">
+      <span id="jis-time"></span>
+      <span class="changed-ago" id="jis-changed"></span>
+    </div>
     <div class="error-msg" id="jis-error" style="display:none"></div>
   </div>
 
   <!-- Oriental Lounge -->
   <div class="card" id="ol-card">
     <div class="card-header">
-      <span class="venue-name">オリエンタルラウンジ 福岡</span>
-      <span class="status-dot" id="ol-dot"></span>
+      <div class="card-header-left">
+        <span class="venue-name">オリエンタルラウンジ 福岡</span>
+        <span class="fire-badge" id="ol-fire" style="display:none">🔥</span>
+      </div>
+      <div class="card-header-right">
+        <span class="closed-badge" id="ol-closed" style="display:none">閉店中</span>
+        <a class="maps-btn" href="https://maps.google.com/maps?q=オリエンタルラウンジ+大名+福岡" target="_blank">📍 MAP</a>
+        <span class="status-dot" id="ol-dot"></span>
+      </div>
     </div>
     <div class="counts">
       <div class="count-box">
@@ -239,31 +211,36 @@
       <div class="bar-wrap"><div class="bar-inner men" id="ol-bar-men"></div></div>
       <div class="bar-wrap"><div class="bar-inner women" id="ol-bar-women"></div></div>
     </div>
-    <div class="card-footer" id="ol-time"></div>
+    <div class="card-footer">
+      <span id="ol-time"></span>
+      <span class="changed-ago" id="ol-changed"></span>
+    </div>
     <div class="error-msg" id="ol-error" style="display:none"></div>
   </div>
 
-  <!-- Sound Park 相席カラオケパーク -->
+  <!-- Sound Park -->
   <div class="card" id="sp-card">
     <div class="card-header">
-      <span class="venue-name">相席カラオケパーク</span>
-      <span class="status-dot" id="sp-dot"></span>
+      <div class="card-header-left">
+        <span class="venue-name">相席カラオケパーク</span>
+      </div>
+      <div class="card-header-right">
+        <span class="status-dot" id="sp-dot"></span>
+      </div>
     </div>
     <div class="sp-stores">
       <!-- 天神西通り店 -->
       <div class="sp-store" id="sp-nishidori">
         <div class="sp-store-header">
           <span class="sp-store-name">天神西通り店</span>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="fire-badge" id="sp-nishidori-fire" style="display:none">🔥</span>
+            <a class="maps-btn" href="https://maps.google.com/maps?q=相席カラオケパーク+天神西通り+福岡" target="_blank">📍 MAP</a>
+          </div>
         </div>
         <div class="sp-counts">
-          <div class="sp-count-box">
-            <div class="sp-count-label men">MEN</div>
-            <div class="sp-count-number men loading" id="sp-nishidori-men">—</div>
-          </div>
-          <div class="sp-count-box">
-            <div class="sp-count-label women">WOMEN</div>
-            <div class="sp-count-number women loading" id="sp-nishidori-women">—</div>
-          </div>
+          <div class="sp-count-box"><div class="sp-count-label men">MEN</div><div class="sp-count-number men loading" id="sp-nishidori-men">—</div></div>
+          <div class="sp-count-box"><div class="sp-count-label women">WOMEN</div><div class="sp-count-number women loading" id="sp-nishidori-women">—</div></div>
         </div>
         <div class="ratio-row">
           <div class="bar-wrap"><div class="bar-inner men" id="sp-nishidori-bar-men"></div></div>
@@ -274,16 +251,14 @@
       <div class="sp-store" id="sp-tenjin-oyafukodori">
         <div class="sp-store-header">
           <span class="sp-store-name">天神親不孝通り店</span>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="fire-badge" id="sp-tenjin-oyafukodori-fire" style="display:none">🔥</span>
+            <a class="maps-btn" href="https://maps.google.com/maps?q=相席カラオケパーク+親不孝通り+福岡" target="_blank">📍 MAP</a>
+          </div>
         </div>
         <div class="sp-counts">
-          <div class="sp-count-box">
-            <div class="sp-count-label men">MEN</div>
-            <div class="sp-count-number men loading" id="sp-tenjin-oyafukodori-men">—</div>
-          </div>
-          <div class="sp-count-box">
-            <div class="sp-count-label women">WOMEN</div>
-            <div class="sp-count-number women loading" id="sp-tenjin-oyafukodori-women">—</div>
-          </div>
+          <div class="sp-count-box"><div class="sp-count-label men">MEN</div><div class="sp-count-number men loading" id="sp-tenjin-oyafukodori-men">—</div></div>
+          <div class="sp-count-box"><div class="sp-count-label women">WOMEN</div><div class="sp-count-number women loading" id="sp-tenjin-oyafukodori-women">—</div></div>
         </div>
         <div class="ratio-row">
           <div class="bar-wrap"><div class="bar-inner men" id="sp-tenjin-oyafukodori-bar-men"></div></div>
@@ -294,16 +269,14 @@
       <div class="sp-store" id="sp-nishijin">
         <div class="sp-store-header">
           <span class="sp-store-name">西新店</span>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="fire-badge" id="sp-nishijin-fire" style="display:none">🔥</span>
+            <a class="maps-btn" href="https://maps.google.com/maps?q=相席カラオケパーク+西新+福岡" target="_blank">📍 MAP</a>
+          </div>
         </div>
         <div class="sp-counts">
-          <div class="sp-count-box">
-            <div class="sp-count-label men">MEN</div>
-            <div class="sp-count-number men loading" id="sp-nishijin-men">—</div>
-          </div>
-          <div class="sp-count-box">
-            <div class="sp-count-label women">WOMEN</div>
-            <div class="sp-count-number women loading" id="sp-nishijin-women">—</div>
-          </div>
+          <div class="sp-count-box"><div class="sp-count-label men">MEN</div><div class="sp-count-number men loading" id="sp-nishijin-men">—</div></div>
+          <div class="sp-count-box"><div class="sp-count-label women">WOMEN</div><div class="sp-count-number women loading" id="sp-nishijin-women">—</div></div>
         </div>
         <div class="ratio-row">
           <div class="bar-wrap"><div class="bar-inner men" id="sp-nishijin-bar-men"></div></div>
@@ -311,7 +284,10 @@
         </div>
       </div>
     </div>
-    <div class="card-footer" id="sp-time"></div>
+    <div class="card-footer">
+      <span id="sp-time"></span>
+      <span class="changed-ago" id="sp-changed"></span>
+    </div>
     <div class="error-msg" id="sp-error" style="display:none"></div>
   </div>
 </main>
@@ -324,17 +300,98 @@
 <script>
   const JIS_WORKER_URL = 'https://jis.aisekichannel.workers.dev';
   const OL_WORKER_URL  = 'https://ol.aisekichannel.workers.dev';
-  const SP_WORKER_URL  = 'https://soundpark.aisekichannel.workers.dev';
+  const SP_WORKER_URL  = 'https://sp.aisekichannel.workers.dev';
 
-  const AUTO_REFRESH_MS = 1 * 60 * 1000;
+  const AUTO_REFRESH_MS = 60 * 1000;
+
+  // Opening hours: [open_hour, close_hour] in JST (24h). close > 24 = next day.
+  const HOURS = {
+    jis: { open: 19, close: 30 },  // 19:00–翌6:00
+    ol:  { open: 19, close: 30 },  // 19:00–翌6:00
+    sp:  { open: 19, close: 29 },  // 19:00–翌5:00
+  };
+
+  // Previous counts for "last changed" tracking
+  const prev = {};
+  const lastChanged = {};
+
+  function isOpen(key) {
+    const h = HOURS[key];
+    const now = new Date();
+    // Convert to JST
+    const jst = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }));
+    let hr = jst.getHours() + jst.getMinutes() / 60;
+    // Treat early morning hours (0–8) as continuation of previous night
+    if (hr < 8) hr += 24;
+    return hr >= h.open && hr < h.close;
+  }
+
+  function setOpen(key, open) {
+    const card = document.getElementById(key + '-card') || document.getElementById('sp-card');
+    const badge = document.getElementById(key + '-closed');
+    if (key === 'jis' || key === 'ol') {
+      document.getElementById(key + '-card').classList.toggle('closed', !open);
+      if (badge) badge.style.display = open ? 'none' : '';
+    } else {
+      // SP card: use sp-card
+      document.getElementById('sp-card').classList.toggle('closed', !open);
+      const spBadge = document.getElementById('sp-closed');
+      if (spBadge) spBadge.style.display = open ? 'none' : '';
+    }
+  }
 
   function setBar(id, val, max) {
-    const pct = max > 0 ? Math.min(100, Math.round(val / max * 100)) : 0;
-    document.getElementById(id).style.width = pct + '%';
+    const el = document.getElementById(id);
+    if (el) el.style.width = (max > 0 ? Math.min(100, Math.round(val / max * 100)) : 0) + '%';
   }
 
   function fmtTime() {
     return new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function fmtAgo(ts) {
+    if (!ts) return '';
+    const mins = Math.floor((Date.now() - ts) / 60000);
+    if (mins < 1) return '今変わった';
+    if (mins < 60) return mins + '分前に変化';
+    const hrs = Math.floor(mins / 60);
+    return hrs + '時間前に変化';
+  }
+
+  function checkFire(fireId, men, women) {
+    const el = document.getElementById(fireId);
+    if (!el) return;
+    // 🔥 if women > men and women >= 3 (avoid firing on 0/1 vs 0)
+    el.style.display = (women > men && women >= 3) ? '' : 'none';
+  }
+
+  function haptic() {
+    if (navigator.vibrate) navigator.vibrate(10);
+  }
+
+  function updateCounts(prefix, men, women, timeElId, changedElId, fireId) {
+    const key = prefix.replace('sp-', 'sp');
+    const sig = men + ':' + women;
+    if (prev[prefix] !== sig) {
+      lastChanged[prefix] = Date.now();
+      prev[prefix] = sig;
+    }
+    const menEl = document.getElementById(prefix + '-men');
+    const womenEl = document.getElementById(prefix + '-women');
+    if (menEl) { menEl.textContent = men; menEl.classList.remove('loading'); }
+    if (womenEl) { womenEl.textContent = women; womenEl.classList.remove('loading'); }
+    const max = Math.max(men, women, 1);
+    setBar(prefix + '-bar-men', men, max);
+    setBar(prefix + '-bar-women', women, max);
+    if (timeElId) {
+      const el = document.getElementById(timeElId);
+      if (el) el.textContent = fmtTime() + ' 時点';
+    }
+    if (changedElId) {
+      const el = document.getElementById(changedElId);
+      if (el) el.textContent = fmtAgo(lastChanged[prefix]);
+    }
+    checkFire(fireId, men, women);
   }
 
   async function fetchJIS() {
@@ -342,20 +399,14 @@
     const errEl = document.getElementById('jis-error');
     errEl.style.display = 'none';
     dot.className = 'status-dot';
+    const open = isOpen('jis');
+    setOpen('jis', open);
     try {
       const r = await fetch(JIS_WORKER_URL, { cache: 'no-store' });
       if (!r.ok) throw new Error('HTTP ' + r.status);
       const d = await r.json();
-      const men = parseInt(d.men) || 0, women = parseInt(d.women) || 0;
-      document.getElementById('jis-men').textContent = men;
-      document.getElementById('jis-women').textContent = women;
-      document.getElementById('jis-men').classList.remove('loading');
-      document.getElementById('jis-women').classList.remove('loading');
-      const max = Math.max(men, women, 1);
-      setBar('jis-bar-men', men, max);
-      setBar('jis-bar-women', women, max);
+      updateCounts('jis', parseInt(d.men)||0, parseInt(d.women)||0, 'jis-time', 'jis-changed', 'jis-fire');
       dot.classList.add('open');
-      document.getElementById('jis-time').textContent = fmtTime() + ' 時点';
     } catch (e) {
       dot.classList.add('error');
       errEl.textContent = '取得できませんでした';
@@ -368,20 +419,14 @@
     const errEl = document.getElementById('ol-error');
     errEl.style.display = 'none';
     dot.className = 'status-dot';
+    const open = isOpen('ol');
+    setOpen('ol', open);
     try {
       const r = await fetch(OL_WORKER_URL, { cache: 'no-store' });
       if (!r.ok) throw new Error('HTTP ' + r.status);
       const d = await r.json();
-      const men = parseInt(d.men) || 0, women = parseInt(d.women) || 0;
-      document.getElementById('ol-men').textContent = men;
-      document.getElementById('ol-women').textContent = women;
-      document.getElementById('ol-men').classList.remove('loading');
-      document.getElementById('ol-women').classList.remove('loading');
-      const max = Math.max(men, women, 1);
-      setBar('ol-bar-men', men, max);
-      setBar('ol-bar-women', women, max);
+      updateCounts('ol', parseInt(d.men)||0, parseInt(d.women)||0, 'ol-time', 'ol-changed', 'ol-fire');
       dot.classList.add('open');
-      document.getElementById('ol-time').textContent = fmtTime() + ' 時点';
     } catch (e) {
       dot.classList.add('error');
       errEl.textContent = '取得できませんでした';
@@ -394,6 +439,7 @@
     const errEl = document.getElementById('sp-error');
     errEl.style.display = 'none';
     dot.className = 'status-dot';
+    setOpen('sp', isOpen('sp'));
     try {
       const r = await fetch(SP_WORKER_URL, { cache: 'no-store' });
       if (!r.ok) throw new Error('HTTP ' + r.status);
@@ -402,22 +448,16 @@
       for (const store of d.stores) {
         if (store.error) continue;
         anyOk = true;
-        const men = store.men ?? 0, women = store.women ?? 0;
         const sid = 'sp-' + store.id;
-        const menEl = document.getElementById(sid + '-men');
-        const womenEl = document.getElementById(sid + '-women');
-        if (menEl) { menEl.textContent = men; menEl.classList.remove('loading'); }
-        if (womenEl) { womenEl.textContent = women; womenEl.classList.remove('loading'); }
-        const max = Math.max(men, women, 1);
-        setBar(sid + '-bar-men', men, max);
-        setBar(sid + '-bar-women', women, max);
+        updateCounts(sid, store.men ?? 0, store.women ?? 0, null, null, sid + '-fire');
       }
-      if (anyOk) {
-        dot.classList.add('open');
-        document.getElementById('sp-time').textContent = fmtTime() + ' 時点';
-      } else {
-        throw new Error('all stores failed');
-      }
+      if (!anyOk) throw new Error('all stores failed');
+      dot.classList.add('open');
+      document.getElementById('sp-time').textContent = fmtTime() + ' 時点';
+      // SP changed ago — use first store as proxy
+      const firstPrefix = 'sp-' + d.stores[0]?.id;
+      const spChanged = document.getElementById('sp-changed');
+      if (spChanged) spChanged.textContent = fmtAgo(lastChanged[firstPrefix]);
     } catch (e) {
       dot.classList.add('error');
       errEl.textContent = '取得できませんでした';
@@ -429,11 +469,69 @@
     const btn = document.getElementById('refresh-btn');
     btn.disabled = true;
     btn.textContent = '⟳ 更新中...';
+    haptic();
     await Promise.all([fetchJIS(), fetchOL(), fetchSP()]);
     document.getElementById('last-updated').textContent = '最終更新: ' + fmtTime();
     btn.disabled = false;
     btn.textContent = '更新';
   }
+
+  // ── Pull to refresh ──────────────────────────────────────────
+  const ptr = document.getElementById('ptr');
+  let ptrStart = 0, ptrTriggered = false, ptrActive = false;
+  const PTR_THRESHOLD = 70;
+
+  document.addEventListener('touchstart', e => {
+    if (window.scrollY === 0) {
+      ptrStart = e.touches[0].clientY;
+      ptrActive = true;
+      ptrTriggered = false;
+    }
+  }, { passive: true });
+
+  document.addEventListener('touchmove', e => {
+    if (!ptrActive) return;
+    const dy = e.touches[0].clientY - ptrStart;
+    if (dy > 0 && window.scrollY === 0) {
+      const pull = Math.min(dy, PTR_THRESHOLD + 20);
+      ptr.style.height = Math.min(pull * 0.6, 44) + 'px';
+      ptr.classList.toggle('visible', pull > 20);
+      ptr.querySelector('span').style.transform = `rotate(${pull * 2}deg)`;
+      if (pull >= PTR_THRESHOLD && !ptrTriggered) {
+        ptrTriggered = true;
+        haptic();
+      }
+    }
+  }, { passive: true });
+
+  document.addEventListener('touchend', async () => {
+    if (!ptrActive) return;
+    ptrActive = false;
+    ptr.style.height = '';
+    if (ptrTriggered) {
+      ptr.classList.add('visible', 'spinning');
+      await fetchAll();
+      ptr.classList.remove('visible', 'spinning');
+    } else {
+      ptr.classList.remove('visible');
+    }
+  });
+
+  // ── "Last changed" ticker — update every minute ──────────────
+  setInterval(() => {
+    ['jis', 'ol'].forEach(k => {
+      const el = document.getElementById(k + '-changed');
+      if (el) el.textContent = fmtAgo(lastChanged[k]);
+    });
+    ['nishidori', 'tenjin-oyafukodori', 'nishijin'].forEach(k => {
+      // SP changed shown on card footer — update via first store
+    });
+    const spChanged = document.getElementById('sp-changed');
+    if (spChanged) {
+      const t = lastChanged['sp-nishidori'] || lastChanged['sp-tenjin-oyafukodori'] || lastChanged['sp-nishijin'];
+      spChanged.textContent = fmtAgo(t);
+    }
+  }, 60000);
 
   fetchAll();
   setInterval(fetchAll, AUTO_REFRESH_MS);
