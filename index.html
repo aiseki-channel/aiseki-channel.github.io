@@ -56,11 +56,12 @@
       display: flex; flex-direction: column; gap: 16px;
       transition: opacity 0.3s;
     }
-    .card.closed { opacity: 0.5; }
+
 
     .card-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
     .card-header-left { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; }
-    .venue-name { font-size: 20px; font-weight: 700; letter-spacing: -0.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .venue-name { font-size: 20px; font-weight: 700; letter-spacing: -0.02em; }
+    .venue-hours { font-size: 11px; color: var(--sub); font-weight: 400; margin-top: 2px; }
     .card-header-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 
     .closed-badge {
@@ -154,8 +155,13 @@
   <div class="card" id="jis-card">
     <div class="card-header">
       <div class="card-header-left">
-        <span class="venue-name">JIS FUKUOKA</span>
-        <span class="fire-badge" id="jis-fire" style="display:none">🔥</span>
+        <div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="venue-name">JIS FUKUOKA</span>
+            <span class="fire-badge" id="jis-fire" style="display:none">🔥</span>
+          </div>
+          <div class="venue-hours">19:00 – 翌6:00</div>
+        </div>
       </div>
       <div class="card-header-right">
         <span class="closed-badge" id="jis-closed" style="display:none">閉店中</span>
@@ -188,8 +194,13 @@
   <div class="card" id="ol-card">
     <div class="card-header">
       <div class="card-header-left">
-        <span class="venue-name">オリエンタルラウンジ 福岡</span>
-        <span class="fire-badge" id="ol-fire" style="display:none">🔥</span>
+        <div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="venue-name">オリエンタルラウンジ 福岡</span>
+            <span class="fire-badge" id="ol-fire" style="display:none">🔥</span>
+          </div>
+          <div class="venue-hours">19:00 – 翌6:00</div>
+        </div>
       </div>
       <div class="card-header-right">
         <span class="closed-badge" id="ol-closed" style="display:none">閉店中</span>
@@ -222,7 +233,10 @@
   <div class="card" id="sp-card">
     <div class="card-header">
       <div class="card-header-left">
-        <span class="venue-name">相席カラオケパーク</span>
+        <div>
+          <span class="venue-name">相席カラオケパーク</span>
+          <div class="venue-hours">19:00 – 翌5:00</div>
+        </div>
       </div>
       <div class="card-header-right">
         <span class="status-dot" id="sp-dot"></span>
@@ -300,7 +314,7 @@
 <script>
   const JIS_WORKER_URL = 'https://jis.aisekichannel.workers.dev';
   const OL_WORKER_URL  = 'https://ol.aisekichannel.workers.dev';
-  const SP_WORKER_URL  = 'https://sp.aisekichannel.workers.dev';
+  const SP_WORKER_URL  = 'https://soundpark.aisekichannel.workers.dev';
 
   const AUTO_REFRESH_MS = 60 * 1000;
 
@@ -352,7 +366,7 @@
   function fmtAgo(ts) {
     if (!ts) return '';
     const mins = Math.floor((Date.now() - ts) / 60000);
-    if (mins < 1) return '今変わった';
+    if (mins < 1) return '';
     if (mins < 60) return mins + '分前に変化';
     const hrs = Math.floor(mins / 60);
     return hrs + '時間前に変化';
@@ -372,10 +386,10 @@
   function updateCounts(prefix, men, women, timeElId, changedElId, fireId) {
     const key = prefix.replace('sp-', 'sp');
     const sig = men + ':' + women;
-    if (prev[prefix] !== sig) {
+    if (prev[prefix] !== undefined && prev[prefix] !== sig) {
       lastChanged[prefix] = Date.now();
-      prev[prefix] = sig;
     }
+    prev[prefix] = sig;
     const menEl = document.getElementById(prefix + '-men');
     const womenEl = document.getElementById(prefix + '-women');
     if (menEl) { menEl.textContent = men; menEl.classList.remove('loading'); }
